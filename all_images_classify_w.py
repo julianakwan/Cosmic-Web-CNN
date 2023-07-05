@@ -103,9 +103,9 @@ if __name__ == "__main__":
 
 #    200 x 200 x 50
 
-    NpixX = 100
-    NpixY = 100
-    NpixZ = 100
+    NpixX = 200
+    NpixY = 200
+    NpixZ = 200
     
     Npix = int(100)        #How many pixels
     nsub = int(16)         #The simulation cube is divided into nsub regions
