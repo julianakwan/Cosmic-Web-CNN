@@ -103,15 +103,15 @@ if __name__ == "__main__":
 
 #    200 x 200 x 50
 
-    NpixX = 200
-    NpixY = 200
-    NpixZ = 50
+    NpixX = 100
+    NpixY = 100
+    NpixZ = 100
     
-    Npix = int(200)        #How many pixels
-    nsub = int(8)         #The simulation cube is divided into nsub regions
+    Npix = int(100)        #How many pixels
+    nsub = int(16)         #The simulation cube is divided into nsub regions
     Nimages=Npix*nsub      #Total images from simulation volume (can be set independently)
     NpixTot = Npix*nsub    #Total pixels from simulation volume (fixed from density cube dims)
-    Size = 50              #Size of region in Mpc/h
+    Size = 25              #Size of region in Mpc/h
     dens_dir = '/hpcdata2/arijkwan/masters/'
     
     #Load datacube
