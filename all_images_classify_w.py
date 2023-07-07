@@ -33,7 +33,7 @@ def flatten_dens_to_images(nx, ny, nz, dens3d):
     BoxSize = 400  # size of the simulation 400 Mpc/h - this is set
     TotPix = 1600  # CIC deposition is 1600 x 1600 x 1600 - this is also set
 
-    npix = 400/1600 #each pixel is npix wide i.e. 0.25 Mpc/h
+    npix = BoxSize/TotPix #each pixel is npix wide i.e. 0.25 Mpc/h
 
     NpixX = int(nx/npix) # number of pixels in x direction
     NpixY = int(ny/npix) # number of pixels in y direction
@@ -108,11 +108,7 @@ if __name__ == "__main__":
     ny = 50   #y dim of image (in Mpc/h)
     nz = 10   #z dim of image (in Mpc/h)
     
-    Npix = int(100)        #How many pixels
-    nsub = int(16)         #The simulation cube is divided into nsub regions
-    Nimages=Npix*nsub      #Total images from simulation volume (can be set independently)
-    NpixTot = Npix*nsub    #Total pixels from simulation volume (fixed from density cube dims)
-    Size = 25              #Size of region in Mpc/h
+
     dens_dir = '/hpcdata2/arijkwan/masters/'
     
     #Load datacube
