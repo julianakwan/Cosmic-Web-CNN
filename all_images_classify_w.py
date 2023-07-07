@@ -72,7 +72,7 @@ def build_regression_model(NpixX,NpixY):
 
         layers.BatchNormalization(),
         layers.Conv2D(128, kernel_size=3, activation='relu', input_shape=(NpixX,NpixY,1)),
->>>>>>> 740d37ae68b696d302506d6854f5c67f354b8a0a
+
         layers.MaxPool2D(pool_size=(2,2)),
         
 
@@ -93,7 +93,7 @@ def build_regression_model(NpixX,NpixY):
 def build_classification_model(NpixX,NpixY):
 
     model = keras.Sequential([keras.layers.Flatten(input_shape=(NpixX,NpixY,1)),keras.layers.Dense(128,activation=tf.nn.relu),keras.layers.Dense(4,activation=tf.nn.softmax)])
->>>>>>> 740d37ae68b696d302506d6854f5c67f354b8a0a
+
     
     model.compile(optimizer='adam',loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
