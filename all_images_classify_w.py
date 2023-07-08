@@ -3,7 +3,8 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 import matplotlib.pyplot as plt
-from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+import h5py
 
 def load_datacubes(dens_dir):
     NpixTot = 1600 #this is set from CIC deposition
@@ -33,7 +34,7 @@ def flatten_dens_to_images(nx, ny, nz, dens3d):
     BoxSize = 400  # size of the simulation 400 Mpc/h - this is set
     TotPix = 1600  # CIC deposition is 1600 x 1600 x 1600 - this is also set
 
-    npix = BoxSize/TotPix #each pixel is npix wide i.e. 0.25 Mpc/h
+    npix = 400/1600 #each pixel is npix wide i.e. 0.25 Mpc/h
 
     NpixX = int(nx/npix) # number of pixels in x direction
     NpixY = int(ny/npix) # number of pixels in y direction
@@ -72,11 +73,10 @@ def build_regression_model(NpixX,NpixY):
 
         layers.BatchNormalization(),
         layers.Conv2D(128, kernel_size=3, activation='relu', input_shape=(NpixX,NpixY,1)),
-
         layers.MaxPool2D(pool_size=(2,2)),
         
 
-        layers.Flatten(input_shape=(Npix,Npix,1)),
+        layers.Flatten(input_shape=(NpixX,NpixY,1)),
         layers.Dropout(0.5),
         layers.Dense(1024,activation=tf.nn.relu),
         layers.Dense(256, activation='relu'),
@@ -93,7 +93,6 @@ def build_regression_model(NpixX,NpixY):
 def build_classification_model(NpixX,NpixY):
 
     model = keras.Sequential([keras.layers.Flatten(input_shape=(NpixX,NpixY,1)),keras.layers.Dense(128,activation=tf.nn.relu),keras.layers.Dense(4,activation=tf.nn.softmax)])
-
     
     model.compile(optimizer='adam',loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
@@ -110,8 +109,11 @@ if __name__ == "__main__":
     ny = 50   #y dim of image (in Mpc/h)
     nz = 10   #z dim of image (in Mpc/h)
     
-
-
+    Npix = int(100)        #How many pixels
+    nsub = int(16)         #The simulation cube is divided into nsub regions
+    Nimages=Npix*nsub      #Total images from simulation volume (can be set independently)
+    NpixTot = Npix*nsub    #Total pixels from simulation volume (fixed from density cube dims)
+    Size = 25              #Size of region in Mpc/h
     dens_dir = '/hpcdata2/arijkwan/masters/'
     
     #Load datacube
@@ -124,7 +126,6 @@ if __name__ == "__main__":
     image_size, train_images_w2p0 = flatten_dens_to_images(nx, ny, nz, dens3d_w2p0)
 
     NpixX, NpixY = image_size
-
 
     #Combine the images into a single array
     all_images = np.concatenate([train_images_w0p5, train_images_w1p0, train_images_w1p5, train_images_w2p0],axis=0)
@@ -151,7 +152,6 @@ if __name__ == "__main__":
     
     ntrain = int(len(all_images)*nsplit) #no. of training images
     training_images = np.zeros([ntrain, NpixX, NpixY])
-
     train_indices = np.random.permutation(np.arange(len(all_images)))  #make random permutation of image indices
     test_indices = train_indices[ntrain:]    #remove some for testing
     train_indices = train_indices[:ntrain]   #keep the rest for training
@@ -169,25 +169,30 @@ if __name__ == "__main__":
     
     training_images = training_images.reshape(-1,NpixX,NpixY,1)
     test_images = test_images.reshape(-1,NpixX,NpixY,1)
-
     
     normalizer = layers.Normalization(input_shape=[1,], axis=None)
     normalizer.adapt(training_images)
     early_stop = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=25)
+    
     model = build_regression_model(NpixX,NpixY)
-
-
+    batch_size = 128
+    
+    #set up some checkpointing for long runs
+    checkpoint_path = dens_dir+"checkpts/cp-{epoch:04d}.ckpt"
+    checkpt = ModelCheckpoint(filepath = checkpoint_path, verbose = 1, save_weights_only=True, save_freq=10*batch_size)
+    
     #the fitting is done with respect to the training sample
-    model.fit(training_images, training_labels, epochs = 100, verbose=1, validation_split=0.2, callbacks=[early_stop])
+    model.fit(training_images, training_labels, epochs = 100, batch_size=batch_size,verbose=1, validation_split=0.2, callbacks=[early_stop, checkpt])
     w_pred = model.predict(test_images)
 
     #the accuracy is tested against a separate set of images the CNN has never seen
     test_acc = model.evaluate(test_images, test_labels)
+
+    model.save(dens_dir+'CNN_model_50_50_10_test.h5')
     
     #######   CNN classification model  #######
     #
     #model = build_classification_model(NpixX,NpixY)
-
     ##Fit on fiducial model
     #model.fit(training_images, labels, epochs=5)
     #
